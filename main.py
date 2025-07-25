@@ -1,81 +1,63 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-
-import torchvision
-from torchvision import datasets, transforms, models
+from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
-
+# Data preprocessing (basic normalization + resize)
 transform = transforms.Compose([
-    transforms.Resize((224, 224)),                             # Resize all images to resnet style, resizing needed cause images vary
-    transforms.ToTensor(),                                     # Convert pil image to tensor
-    transforms.Normalize([0.5, 0.5, 0.5],                      # Normalize RGB channels to (-1, 1)
-                         [0.5, 0.5, 0.5])
+    transforms.Resize((32, 32)),
+    transforms.ToTensor(),
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
-train_data = datasets.ImageFolder(root='data/train', transform=transform)
-test_data = datasets.ImageFolder(root='data/test', transform=transform)
+trainset = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+testset  = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
 
-trainLoader = DataLoader(train_data, batch_size=32, shuffle=True)
-testLoader = DataLoader(test_data, batch_size=32, shuffle=False)
+train_loader = DataLoader(trainset, batch_size=32, shuffle=True)
+test_loader  = DataLoader(testset,  batch_size=32, shuffle=False)
 
-class FundusCNN(nn.Module):
+class SimpleCNN(nn.Module):
     def __init__(self):
-        super(SimpleCNN, self).__init__() #kerrnals = extracting little info peanuts
-        
-        self.features = nn.Sequential(
-            nn.Conv2d(3, 16, kernel_size=3, padding=1),  # 3 channel (rgb) and 16 filterss
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),                          # 224x224 → 112x112
-            nn.Conv2d(16, 32, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2)                           # 112x112 → 56x56
-        )
-
-        self.classifier = nn.Sequential(
-            nn.Flatten(),                                # 64 channels * 56 * 56 = 200704
-            nn.Linear(64 * 56 * 56, 128),
-            nn.ReLU(),
-            nn.Linear(128, 2)                            # 2 output classes: healthy / unhealthy
-        )
+        super(SimpleCNN, self).__init__()
+        self.conv1 = nn.Conv2d(3, 16, 5)
+        self.pool  = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(16, 32, 5)
+        self.fc1   = nn.Linear(32 * 5 * 5, 120)
+        self.fc2   = nn.Linear(120, 84)
+        self.fc3   = nn.Linear(84, 10)
 
     def forward(self, x):
-        x = self.features(x)
-        x = self.classifier(x)
-        return x
+        x = self.pool(torch.relu(self.conv1(x)))
+        x = self.pool(torch.relu(self.conv2(x)))
+        x = x.view(-1, 32 * 5 * 5)
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        return self.fc3(x)
 
-model = FundusCNN() #init-ng it 
+model = SimpleCNN()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-for epoch in range(5):  # (increase in testing, kept low for fast checks initially)
+# Training loop
+for epoch in range(5):
     running_loss = 0.0
-    for images, labels in trainLoader:
-        outputs = model(images)
-        loss = criterion(outputs, labels) # 
-
+    for images, labels in train_loader:
         optimizer.zero_grad()
+        outputs = model(images)
+        loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
-
         running_loss += loss.item()
-    
-    print(f"Epoch {epoch+1} complete. Loss: {running_loss/len(trainLoader):.4f}")
+    print(f"[{epoch+1}] loss: {running_loss/len(train_loader):.3f}")
 
-# test sets rn
-
-correct = 0
-total = 0
-
+# Simple evaluation
+correct = total = 0
 with torch.no_grad():
-    for images, labels in testLoader:
+    for images, labels in test_loader:
         outputs = model(images)
-        _, predicted = torch.max(outputs, 1)
+        _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 
-print(f"Test Accuracy: {100 * correct / total:.2f}%")
+print(f"Accuracy: {100 * correct / total:.2f}%")
