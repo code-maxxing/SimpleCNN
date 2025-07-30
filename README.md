@@ -18,3 +18,5 @@ Peak validation accuracy was hit at epoch 4, at 67.76%, not outstanding by far b
 
 Started by cloning patrick loebar's examples and basic cnns i found on stack overflow,
 using ai assistants to help debug and fix code, implementing it after understanding and cross referencing with tutorials
+
+Looked through a few code reviews and understood how far below bar my current work was, I aim to add significantly higher (till distinguished) accuracy validations by vertically building on this consistently
