@@ -1,6 +1,6 @@
 CIFAR-10 Classifier: My First PyTorch CNN 
 
-Built a convolutional neural network from scratch using PyTorch to classify CIFAR-10 images.
+Built a convolutional neural network using PyTorch to classify CIFAR-10 images.
 Implemented a full training pipeline with GPU support, data normalization (transforms.Normalize), and cross-entropy loss. 
 The architecture uses two convolutional layers (nn.Conv2d) with ReLU activation and max-pooling, followed by three linear layers -
 The training loop handles DataLoader (as batch iteration) and backpropagation (loss.backward()) to learn.
