@@ -1,4 +1,4 @@
-CIFAR-10 Classifier: My First PyTorch CNN 
+CIFAR-10 Classifier: My First PyTorch CNN (Cloned to learn, NOT ORIGINAL)
 
 Built a convolutional neural network using PyTorch to classify CIFAR-10 images.
 Implemented a full training pipeline with GPU support, data normalization (transforms.Normalize), and cross-entropy loss. 
